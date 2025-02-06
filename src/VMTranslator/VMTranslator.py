@@ -304,7 +304,7 @@ if __name__ == "__main__":
 
     in_filename = args.vm_filename
     base_filename, _ = os.path.splitext(in_filename)
-    out_filename = f"{base_filename}{".asm"}"
+    out_filename = f"{base_filename}.asm"
 
     parser = Parser(in_filename)
     writer = CodeWriter(out_filename)
