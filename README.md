@@ -24,7 +24,7 @@
 
 - local / argument / this / that \
   `push <segment> i`: `addr = <BASE_ADDR> + i; RAM[SP] = RAM[addr]; SP++` \
-  `pop <segment> i`: `addr = <BASE_ADDR> + i; SP-; RAM[addr] = RAM[SP]`
+  `pop <segment> i`: `addr = <BASE_ADDR> + i; SP--; RAM[addr] = RAM[SP]`
   `<segment>` | `<BASE_ADDR>`
   ------------|---------------
    local      | `LCL`

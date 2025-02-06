@@ -1,0 +1,305 @@
+=== add
+// pop y
+// SP--
+@SP
+M=M-1
+// D=*SP
+A=M
+D=M
+// pop x
+// SP--
+@SP
+M=M-1
+// *SP=D+*SP; push x
+@SP
+A=M
+M=D+M
+// SP++
+@SP
+M=M+1
+
+== sub
+// pop y
+// SP--
+@SP
+M=M-1
+// D=*SP
+A=M
+D=M
+// pop x
+// SP--
+@SP
+M=M-1
+// *SP=*SP-D; push x
+@SP
+A=M
+M=M-D
+// SP++
+@SP
+M=M+1
+
+== and
+// pop y
+// SP--
+@SP
+M=M-1
+// D=*SP
+A=M
+D=M
+// pop x
+// SP--
+@SP
+M=M-1
+// *SP=D&*SP; push x
+@SP
+A=M
+M=D&M
+// SP++
+@SP
+M=M+1
+
+== or
+// pop y
+// SP--
+@SP
+M=M-1
+// D=*SP
+A=M
+D=M
+// pop x
+// SP--
+@SP
+M=M-1
+// *SP=D|*SP; push x
+// @SP // Can be optimized out
+A=M
+M=D|M
+// SP++
+@SP
+M=M+1
+
+== eq
+// pop y
+// SP--
+@SP
+M=M-1
+// D=*SP
+A=M
+D=M
+// pop x
+// SP--
+@SP
+M=M-1
+// if *SP==D, push 1, else push 0
+// @SP // Can be optimized out
+A=M
+D=M-D
+@SET_TRUE
+D;JEQ
+// D=0
+D=0
+@PUSH_RES
+0;JMP
+(SET_TRUE)
+// D=-1
+D=-1
+(PUSH_RES)
+@SP
+A=M
+M=D
+// SP++
+@SP
+M=M+1
+
+== gt
+// pop y
+// SP--
+@SP
+M=M-1
+// D=*SP
+A=M
+D=M
+// pop x
+// SP--
+@SP
+M=M-1
+// if *SP>D, push 1, else push 0
+// @SP // Can be optimized out
+A=M
+D=M-D
+@SET_TRUE
+D;JGT
+// D=0
+D=0
+@PUSH_RES
+0;JMP
+(SET_TRUE)
+// D=-1
+D=-1
+(PUSH_RES)
+@SP
+A=M
+M=D
+// SP++
+@SP
+M=M+1
+
+== lt
+// pop y
+// SP--
+@SP
+M=M-1
+// D=*SP
+A=M
+D=M
+// pop x
+// SP--
+@SP
+M=M-1
+// if *SP<D, push 1, else push 0
+// @SP // Can be optimized out
+A=M
+D=M-D
+@SET_TRUE
+D;JLT
+// D=0
+D=0
+@PUSH_RES
+0;JMP
+(SET_TRUE)
+// D=-1
+D=-1
+(PUSH_RES)
+@SP
+A=M
+M=D
+// SP++
+@SP
+M=M+1
+
+=== not
+@SP
+A=M-1
+M=!M
+
+=== neg
+@SP
+A=M-1
+M=-M
+
+== push constant i
+// RAM[SP] = i
+@i
+D=A
+@SP
+A=M
+M=D
+// SP++
+@SP
+M=M+1
+
+== push <local> i
+// addr = <LCL> + i
+@<LCL>
+D=M
+@i
+A=D+A
+// RAM[SP] = RAM[addr]
+D=M
+@SP
+A=M
+M=D
+// SP++
+@SP
+M=M+1
+
+== pop <local> i
+// addr = <LCL> + i
+@<LCL>
+D=M
+@i
+D=D+A
+@R13
+M=D
+// SP--
+@SP
+M=M-1
+// RAM[addr] = RAM[SP]
+A=M
+D=M
+@R13
+A=M
+M=D
+
+== push static i
+// RAM[SP] = Xxx.i
+@Xxx.i
+D=M
+@SP
+A=M
+M=D
+// SP++
+@SP
+M=M+1
+
+== pop static i
+// SP--
+@SP
+AM=M-1
+// Xxx.i = SP
+D=M
+@Xxx.i
+M=D
+
+== push temp i
+// addr = 5 + i
+@5
+D=A
+@i
+A=D+A
+// RAM[SP] = RAM[addr]
+D=M
+@SP
+A=M
+M=D
+// SP++
+@SP
+M=M+1
+
+== pop temp i
+// addr = 5 + i
+@5
+D=A
+@i
+D=D+A
+@R13
+M=D
+// SP--
+@SP
+M=M-1
+// RAM[addr] = RAM[SP]
+A=M
+D=M
+@R13
+A=M
+M=D
+
+== push pointer 0
+// RAM[SP]=THIS
+@THIS
+D=M
+@SP
+A=M
+M=D
+// SP++
+@SP
+M=M+1
+
+== pop pointer 0
+// SP--
+@SP
+AM=M-1
+// THIS=RAM[SP]
+D=M
+@THIS
+M=D
