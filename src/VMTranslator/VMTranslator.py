@@ -18,8 +18,8 @@ class Parser:
     """
     Reads and parses VM file.
 
-    Handles the parsing og a single .vm file.
-    Reads a VM command, parses tge command into its lexical components,
+    Handles the parsing of a single .vm file.
+    Reads a VM command, parses the command into its lexical components,
     and provides convenient access to these components.
     Ignore whitespace and comments
     """
@@ -64,7 +64,7 @@ class Parser:
     def commandType(self) -> str:
         """
         Returns the type of the current command.
-        C_ARITMETIC: if the current command is an arithmentic-logical command;
+        C_ARITHMETIC: if the current command is an arithmentic-logical command;
         C_PUSH / C_POP: if the current command is one of push / pop command types
         """
         cmd = self.current_cmd
@@ -126,7 +126,7 @@ class CodeWriter:
         self.vm_filename = os.path.splitext(os.path.basename(filename))[0]
         self.label_idx = 0
 
-    def __del__(self):
+    def close(self):
         """
         Closes the output (destination ASM code) file
         """
@@ -318,3 +318,5 @@ if __name__ == "__main__":
             writer.writePushPop(cmd_type, first_arg, index)
         else:
             writer.writeArithmetic(first_arg)
+
+    writer.close()
