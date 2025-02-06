@@ -19,16 +19,12 @@
 - `pop segment i`
 
 #### Virtual Memory Segments
-- constant
-
+- constant \
   `push constant i`: `RAM[SP] = i; SP++`
 
-- local / argument / this / that
-
-  `push <segment> i`: `addr = <BASE_ADDR> + i; RAM[SP] = RAM[addr]; SP++`
-
+- local / argument / this / that \
+  `push <segment> i`: `addr = <BASE_ADDR> + i; RAM[SP] = RAM[addr]; SP++` \
   `pop <segment> i`: `addr = <BASE_ADDR> + i; SP-; RAM[addr] = RAM[SP]`
-
   `<segment>` | `<BASE_ADDR>`
   ------------|---------------
    local      | `LCL`
@@ -36,17 +32,25 @@
    this       | `THIS`
    that       | `THAT`
 
-- static
-  
+- static \
   `push/pop static i`: `push/pop Xxx.i` while translating `Xxx.vm` file
 
-- temp
-  
+- temp \
   `push/pop temp i`: `push/pop RAM[5+i]`
 
-- pointer
-  
-  `push/pop pointer 0`: `push/pop THIS`
+- pointer \
+  `push/pop pointer 0`: `push/pop THIS`\
   `push/pop pointer 1`: `push/pop THAT`
 
 #### Standard VM Mapping
+ Symbol / segment                      | RAM location
+---------------------------------------|--------------
+ SP                                    | 0
+ LCL                                   | 1
+ ARG                                   | 2
+ THIS                                  | 3
+ THAT                                  | 4
+ temp segment                          | 5 - 121
+ general purpose registers (R13 - R15) | 13 - 15
+ static segment / Xxx.i                | 16 - 255
+ Stack                                 | 256 - 2047
