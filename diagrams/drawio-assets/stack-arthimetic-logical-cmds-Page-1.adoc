@@ -1,4 +1,0 @@
-= stack-arthimetic-logical-cmds Page-1
-
-image::stack-arthimetic-logical-cmds-Page-1.png[Page-1]
-
