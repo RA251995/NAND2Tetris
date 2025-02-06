@@ -22,8 +22,9 @@ jobs:
       - name: Export drawio files to asciidoctor and png files
         uses: rlespinasse/drawio-export-action@v2
         with:
-          format: adoc
-          transparent: true
+          format: png
+          remove-page-suffix: true
+          border: 1
           output: drawio-assets
 
       - name: Get author and committer info from HEAD commit
