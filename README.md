@@ -1,7 +1,7 @@
 # NAND to Tetris Course Notes
 ## Virtual Machine - Stack Machine
 ### Arithmetic / Logical Commands
-![image](diagrams\drawio-assets\stack-arthimetic-logical-cmds.png)
+![image](diagrams/drawio-assets/stack-arthimetic-logical-cmds.png)
  command | operation | returns
 ---------|-----------|---------
  `add`    | x+y       | integer
