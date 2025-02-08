@@ -12,6 +12,12 @@ class C_TYPE:
     C_ARITHMETIC = "C_ARITHMETIC"
     C_PUSH = "push"
     C_POP = "pop"
+    C_LABEL = "label"
+    C_GOTO = "goto"
+    C_IF = "if-goto"
+    C_FUNCTION = "function"
+    C_RETURN = "return"
+    C_CALL = "call"
 
 
 class Parser:
@@ -59,13 +65,15 @@ class Parser:
         """
         line = self.lines[self.line_offset - 1]
         self.current_cmd = line.split("//")[0].strip()
-        logging.debug(f"Processing {self.line_offset - 1}: `{self.current_cmd}`")
+        logging.debug(
+            f"Processing {self.line_offset - 1}: `{self.current_cmd}`")
 
     def commandType(self) -> str:
         """
         Returns the type of the current command.
         C_ARITHMETIC: if the current command is an arithmentic-logical command;
-        C_PUSH / C_POP: if the current command is one of push / pop command types
+        C_PUSH / C_POP: if the current command is one of push / pop command types;
+        C_LABEL / C_GOTO / C_IF: if the current command is one of branching commands
         """
         cmd = self.current_cmd
         self.current_cmd_type = None
@@ -76,8 +84,14 @@ class Parser:
             self.current_cmd_type = C_TYPE.C_POP
         elif first_word == "push":
             self.current_cmd_type = C_TYPE.C_PUSH
+        elif first_word == "label":
+            self.current_cmd_type = C_TYPE.C_LABEL
+        elif first_word == "goto":
+            self.current_cmd_type = C_TYPE.C_GOTO
+        elif first_word == "if-goto":
+            self.current_cmd_type = C_TYPE.C_IF
         else:
-            raise RuntimeError(f"Unknown command type: {self.current_cmd}")
+            raise RuntimeError(f"Unknown command type: `{self.current_cmd}`")
         logging.debug(f"Command type: `{self.current_cmd_type}`")
         return self.current_cmd_type
 
@@ -87,13 +101,11 @@ class Parser:
         In the case of C_ARITHMETIC, the command itself is returned
         """
         first_arg = None
-        if self.current_cmd_type == C_TYPE.C_ARITHMETIC:
+        if self.current_cmd_type in C_TYPE.C_ARITHMETIC:
             first_arg = self.current_cmd.split()[0]
-        elif (
-            self.current_cmd_type == C_TYPE.C_PUSH
-            or self.current_cmd_type == C_TYPE.C_POP
-        ):
-            # `segment` is the first argument for push and pop
+        elif self.current_cmd_type in [C_TYPE.C_PUSH, C_TYPE.C_POP, C_TYPE.C_LABEL, C_TYPE.C_GOTO, C_TYPE.C_IF]:
+            # `segment` is the first argument for push and pop and
+            # `label` is the first argument for branching commands
             first_arg = self.current_cmd.split()[1]
         logging.debug(f"First argument: `{first_arg}`")
         return first_arg
@@ -209,7 +221,8 @@ class CodeWriter:
                     elif index == 1:
                         BASE_ADDR_SYMBOL = "THAT"
                     else:
-                        raise RuntimeError(f"Invalid index in command: `{command} {segment} {index}`")
+                        raise RuntimeError(f"Invalid index in command: `{
+                                           command} {segment} {index}`")
                     self.file.write(f"@{BASE_ADDR_SYMBOL}\n")
                     self.file.write("D=M\n")
                 self.file.write("@SP\n")
@@ -241,7 +254,8 @@ class CodeWriter:
                 self.file.write("@SP\n")
                 self.file.write("M=M+1\n")
             else:
-                raise RuntimeError(f"Invalid segment in command: `{command} {segment} {index}`")
+                raise RuntimeError(f"Invalid segment in command: `{
+                                   command} {segment} {index}`")
         elif command == C_TYPE.C_POP:
             if segment in ["local", "argument", "this", "that", "temp"]:
                 if segment in ["local", "argument", "this", "that"]:
@@ -281,11 +295,51 @@ class CodeWriter:
                     elif index == 1:
                         BASE_ADDR_SYMBOL = "THAT"
                     else:
-                        raise RuntimeError(f"Invalid index in command: `{command} {segment} {index}`")
+                        raise RuntimeError(f"Invalid index in command: `{
+                                           command} {segment} {index}`")
                     self.file.write(f"@{BASE_ADDR_SYMBOL}\n")
                 self.file.write("M=D\n")
             else:
-                raise RuntimeError(f"Invalid segment in command: `{command} {segment} {index}`")
+                raise RuntimeError(f"Invalid segment in command: `{
+                                   command} {segment} {index}`")
+
+    def writeLabel(self, label: str):
+        """
+        Writes assembly code that effects the `label` command
+        """
+        self.file.write(f"// label {label}\n")
+        self.file.write(f"({label})\n")
+
+    def writeGoto(self, label: str):
+        """
+        Write assembly code that effects the `goto` command
+        """
+        self.file.write(f"// goto {label}\n")
+        self.file.write(f"@{label}\n")
+        self.file.write(f"0;JMP\n")
+
+    def writeIf(self, label: str):
+        """
+        Write assembly code that effects the `if-goto` command
+        """
+        self.file.write(f"// if-goto {label}\n")
+        self.file.write("@SP\n")
+        self.file.write("AM=M-1\n")
+        self.file.write("D=M\n")
+        self.file.write(f"@{label}\n")
+        self.file.write(f"D;JNE\n")
+
+    def writeFunction(self, functionName: str, nArgs: int):
+        """
+        Write assembly code that effects the `call` command
+        """
+        self.file.write(f"// function {functionName} {nArgs}\n")
+
+    def writeReturn(self):
+        """
+        Write assembly code that effects the `return` command
+        """
+        self.file.write(f"// return\n")
 
 
 if __name__ == "__main__":
@@ -313,10 +367,18 @@ if __name__ == "__main__":
         parser.advance()
         cmd_type = parser.commandType()
         first_arg = parser.arg1()
-        if cmd_type is C_TYPE.C_PUSH or cmd_type is C_TYPE.C_POP:
+        if cmd_type in [C_TYPE.C_PUSH, C_TYPE.C_POP]:
             index = parser.arg2()
             writer.writePushPop(cmd_type, first_arg, index)
-        else:
+        elif cmd_type == C_TYPE.C_ARITHMETIC:
             writer.writeArithmetic(first_arg)
+        elif cmd_type == C_TYPE.C_LABEL:
+            writer.writeLabel(first_arg)
+        elif cmd_type == C_TYPE.C_GOTO:
+            writer.writeGoto(first_arg)
+        elif cmd_type == C_TYPE.C_IF:
+            writer.writeIf(first_arg)
+        else:
+            raise RuntimeError(f"Unknown command type: {cmd_type}")
 
     writer.close()

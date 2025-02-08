@@ -303,3 +303,14 @@ AM=M-1
 D=M
 @THIS
 M=D
+
+== if-goto label
+// cond = pop
+// SP--
+@SP
+AM=M-1
+// cond = RAM[SP]
+D=M
+// if cond, jump to label
+@label
+!D;JEQ

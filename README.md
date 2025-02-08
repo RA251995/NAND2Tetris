@@ -40,6 +40,7 @@ null, JGT, JEQ, JGE, JLT, JNE, JLE, JMP
  `and`    | x AND y   | boolean
  `or`     | x OR y    | boolean
  `not`    | NOT y     | boolean
+> Non-zero value considered true and zero value considered false for boolean returns
 
 ### Push / Pop Commands
 - `push <segment> <index>`
@@ -74,7 +75,7 @@ null, JGT, JEQ, JGE, JLT, JNE, JLE, JMP
 - `goto <label>`: Jump to execute the command just after the `<label>`
 - `if-goto <label>`: 
   1. let *cond* = `pop`
-  2. if *cond*, jump to execute the command just after the `<label>`; else, execute the next command
+  2. if *cond* != 0, jump to execute the command just after the `<label>`; else, execute the next command
 
 ### Function Commands
 - function
