@@ -345,7 +345,7 @@ class CodeWriter:
 if __name__ == "__main__":
     # Configure logging
     logging.basicConfig(
-        level=logging.DEBUG,
+        level=logging.INFO,
         format="%(levelname)s | %(module)s : %(funcName)s | %(message)s",
     )
 
@@ -354,7 +354,12 @@ if __name__ == "__main__":
         description="VM Translator for HACK machine (.vm -> .asm)"
     )
     parser.add_argument("vm_filename", type=str, help="VM file to translate")
+    parser.add_argument("--debug", "-d", action="store_true", help="Enable debug output")
     args = parser.parse_args()
+
+    if args.debug:
+        logging.getLogger().setLevel(logging.DEBUG)
+        print("Enable debug")
 
     in_filename = args.vm_filename
     base_filename, _ = os.path.splitext(in_filename)
