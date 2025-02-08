@@ -78,9 +78,89 @@ null, JGT, JEQ, JGE, JLT, JNE, JLE, JMP
   2. if *cond* != 0, jump to execute the command just after the `<label>`; else, execute the next command
 
 ### Function Commands
-- function
-- call
-- return
+- `call <functionName> <nArgs>`: \
+Calls function `<functionName>` for its effect, informing that `<nArgs>` argument values were pushed onto the stack
+> Convention: The caller must push `<nArgs>` arguments to stack before the `call` command
+- `function <functionName> <nVars>`: \
+Here starts the declaration of function `<functionName>` with `<nVars>` local variables 
+- `return`: \
+The *return value* will replace (in the stack) the argument values that were pushed by the caller before the `call`; \
+Control will be transferred back to the caller; \
+Execution will resume with the command just after the call
+> Convention: The callee must push a value onto the stack before a `return` command
+### Translation: `call` / `function` / `return`
+```c
+  // call <functionName> <x>
+  /* Creates return address label `<thisFunctionName$ret.1>`;
+   * Saves the return address and the caller's segment pointers */
+  goto <functionName>       // injected branching to the called function
+(<thisFunctionName$ret.1>)  // injected return address label
+```
+```c
+// function <functionName> <y>
+(<functionName>) // injected function's entry point label
+  /* assembly code that initializes the function's <y> local variables */
+
+  // ...
+  /* assembly code that handles the functions body */
+  
+  // return
+  /* Retrives the saved return address */
+  /* Replaces the arguments pushed by the caller with the return value */
+  /* Reinstates the segment  pointers of the caller */
+  goto <thisFunctionName$ret.1> // injected branching back to the calling site
+```
+#### **`call`**
+![image](diagrams/drawio-assets/call-stack.png)
+```c
+  // call functionName nArgs
+  // Save the return address
+  push retAddrLabel // Generates and pushes this label
+  // Save the caller's segment pointers
+  push LCL
+  push ARG
+  push THIS
+  push THAT
+  // Reposition ARG (for the callee)
+  ARG = SP - 5 - nArgs
+  // Reposition LCL (for the callee)
+  LCL = SP
+  // Go to execute the callee's code
+  goto functionName
+(retAddrLabel)
+```
+#### **`function`**
+![image](diagrams/drawio-assets/function-stack.png)
+```c
+  // function <functionName> <nVars>
+  // Inject an entry point label into the code
+(<functionName>)
+  // Initialize the `local` segment of the callee
+  // push <nVars> 0 values
+  push 0
+  ...
+  push 0 
+```
+
+#### **`return`**
+![image](diagrams/drawio-assets/return-stack.png)
+```c
+  // *endFrame* and *retAddr*: temporary variables
+  // *addr denotes RAM[addr]
+  endFrame = LCL            // gets the address at the frames end
+  retAddr = *(endFrame - 5) // gets the address of return address
+  // Replace the arguments that the caller push with the value returned by the callee
+  *ARG = pop()  // puts the return value for the caller 
+  // Replace the memory used by the callee
+  SP = ARG + 1  // Reposition SP
+  // Replace the caller's segment pointers
+  THAT = *(endFrame - 1)  // Restore THAT
+  THIS = *(endFrame - 2)  // Restore THIS
+  ARG = *(endFrame - 3)   // Restore ARG
+  LCL = *(endFrame - 4)   // Restore LCL
+  // Jump to the return address
+  goto retAddr
+```
 
 ### Standard VM Mapping
  Symbol / segment                      | RAM location
@@ -94,3 +174,12 @@ null, JGT, JEQ, JGE, JLT, JNE, JLE, JMP
  general purpose registers (R13 - R15) | 13 - 15
  static segment / Xxx.i                | 16 - 255
  Stack                                 | 256 - 2047
+
+### Symbols
+ - `SP`
+ - `LCL`, `ARG`, `THIS`, `THAT`
+ - `R13`, `R14`, `R15`
+ - `Xxx.i`: `static i` in file `Xxx.vm`
+ - `Xxx.functionName`: function `functionName` in file `Xxx.vm`
+ - `Xxx.functionName$ret.i`: `i`-th instance of return in function `functionName` of file `Xxx.vm`
+ - `Xxx.functionName$label`: label `label` in function `functionName` of file `Xxx.vm`
